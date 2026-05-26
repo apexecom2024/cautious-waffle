@@ -107,10 +107,12 @@ export class GdmLiveAudioVisuals3D extends LitElement {
 
     .orb-ring {
       position: absolute;
-      inset: 6px;
+      inset: 0;
       border-radius: 50%;
       z-index: 2;
       pointer-events: none;
+      mask: radial-gradient(circle, transparent 68%, #000 68%, #000 74%, transparent 74%);
+      -webkit-mask: radial-gradient(circle, transparent 68%, #000 68%, #000 74%, transparent 74%);
     }
   `;
 
@@ -123,7 +125,7 @@ export class GdmLiveAudioVisuals3D extends LitElement {
   firstUpdated() {
     this.surfaceEl = this.shadowRoot!.querySelector('.pluto-surface') as HTMLElement;
     this.waveEls = this.shadowRoot!.querySelectorAll('.wave-layer') as NodeListOf<HTMLElement>;
-    this.barEls = this.shadowRoot!.querySelectorAll('.orb-bar') as NodeListOf<HTMLElement>;
+    this.ringEl = this.shadowRoot!.querySelector('.orb-ring') as HTMLElement;
     this.animate();
   }
 
@@ -191,12 +193,25 @@ export class GdmLiveAudioVisuals3D extends LitElement {
 
     this.style.setProperty('--orb-scale', String(scale));
 
-    const barCount = this.barEls.length;
-    for (let b = 0; b < barCount; b++) {
-      const oIdx = Math.min(b * 2, o.length - 1);
-      const iIdx = Math.min(b * 2 + 1, i.length - 1);
-      const val = (o[oIdx] / 255) * 0.7 + (i[iIdx] / 255) * 0.3;
-      this.barEls[b].style.height = `${4 + val * 36}px`;
+    if (this.ringEl) {
+      const segCount = 12;
+      const segDeg = 360 / segCount;
+      const fillDeg = segDeg * 0.45;
+      const stops: string[] = [];
+      const hue2 = (hue + 40) % 360;
+      for (let s = 0; s < segCount; s++) {
+        const oIdx = Math.min(s * 3, o.length - 1);
+        const iIdx = Math.min(s * 3 + 1, i.length - 1);
+        const val = clamp((o[oIdx] / 255) * 0.65 + (i[iIdx] / 255) * 0.35);
+        const a = clamp(0.15 + val * 0.7);
+        const start = s * segDeg;
+        const mid = start + fillDeg;
+        const end = (s + 1) * segDeg;
+        stops.push(`hsla(${hue2}, ${sat + 10}%, ${light + 10}%, ${a}) ${start}deg`);
+        stops.push(`transparent ${mid}deg`);
+        stops.push(`transparent ${end}deg`);
+      }
+      this.ringEl.style.background = `conic-gradient(from 0deg, ${stops.join(', ')})`;
     }
   }
 
@@ -207,24 +222,7 @@ export class GdmLiveAudioVisuals3D extends LitElement {
         <div class="wave-layer"></div>
         <div class="wave-layer"></div>
         <div class="wave-layer"></div>
-        <div class="orb-bars">
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-          <div class="orb-bar"></div>
-        </div>
+        <div class="orb-ring"></div>
       </div>
     `;
   }
