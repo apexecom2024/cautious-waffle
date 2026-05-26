@@ -565,8 +565,6 @@ export class GdmLiveAudio extends LitElement {
 
     .video-call-btn svg {
       display: block;
-      width: 32px;
-      height: 32px;
     }
 
     .video-call-btn.end-call {
@@ -1068,7 +1066,7 @@ export class GdmLiveAudio extends LitElement {
 
         <div class="video-call-controls">
           <button class="video-call-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
               <rect x="2" y="4" width="20" height="14" rx="2" ry="2"></rect>
               <path d="M8 20h8"></path>
               <path d="M12 20v4"></path>
@@ -1078,13 +1076,13 @@ export class GdmLiveAudio extends LitElement {
           </button>
 
           <button class="video-call-btn end-call" @click=${this.toggleVideo}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width: 26px; height: 26px;">
               <path d="M6 6l12 12M18 6L6 18"></path>
             </svg>
           </button>
 
           <button class="video-call-btn" @click=${this.flipCamera}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
               <path d="M3 8a2 2 0 012-2h2l1.5-2h7L17 6h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path>
               <circle cx="12" cy="13" r="4"></circle>
             </svg>
