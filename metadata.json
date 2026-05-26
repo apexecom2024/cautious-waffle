@@ -1,0 +1,12 @@
+{
+  "name": "Eburon AI: Beatrice",
+  "description": "Meet Beatrice, your warm and witty assistant for Eburon AI. An interactive experience powered by the Live Audio API.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ],
+  "prompt": "",
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
