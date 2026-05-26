@@ -104,16 +104,26 @@ export class GdmLiveAudioVisuals3D extends LitElement {
       50%  { transform: translate(2%, 3%) scale(1.02); }
       100% { transform: translate(0%, 0%) scale(1); }
     }
+
+    .orb-ring {
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      z-index: 2;
+      pointer-events: none;
+    }
   `;
 
   private surfaceEl!: HTMLElement;
   private waveEls!: NodeListOf<HTMLElement>;
+  private ringEl!: HTMLElement;
 
   private audioT = 0;
 
   firstUpdated() {
     this.surfaceEl = this.shadowRoot!.querySelector('.pluto-surface') as HTMLElement;
     this.waveEls = this.shadowRoot!.querySelectorAll('.wave-layer') as NodeListOf<HTMLElement>;
+    this.barEls = this.shadowRoot!.querySelectorAll('.orb-bar') as NodeListOf<HTMLElement>;
     this.animate();
   }
 
@@ -180,6 +190,14 @@ export class GdmLiveAudioVisuals3D extends LitElement {
     );
 
     this.style.setProperty('--orb-scale', String(scale));
+
+    const barCount = this.barEls.length;
+    for (let b = 0; b < barCount; b++) {
+      const oIdx = Math.min(b * 2, o.length - 1);
+      const iIdx = Math.min(b * 2 + 1, i.length - 1);
+      const val = (o[oIdx] / 255) * 0.7 + (i[iIdx] / 255) * 0.3;
+      this.barEls[b].style.height = `${4 + val * 36}px`;
+    }
   }
 
   protected render() {
@@ -189,6 +207,24 @@ export class GdmLiveAudioVisuals3D extends LitElement {
         <div class="wave-layer"></div>
         <div class="wave-layer"></div>
         <div class="wave-layer"></div>
+        <div class="orb-bars">
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+          <div class="orb-bar"></div>
+        </div>
       </div>
     `;
   }
