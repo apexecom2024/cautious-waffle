@@ -78,9 +78,14 @@ export class GdmLiveAudio extends LitElement {
   @state() agentTranscription = '';
   @state() userTranscription = '';
   @state() showTranscription = false;
+  @state() callTimer = '00:00';
+  @state() useFrontCamera = true;
+  private callStartTime = 0;
+  private callTimerInterval: number | null = null;
 
   @query('#video-preview') videoElement: HTMLVideoElement;
   @query('#video-canvas') canvasElement: HTMLCanvasElement;
+  @query('#video-call-user-video') videoCallUserVideo: HTMLVideoElement;
 
   private client: GoogleGenAI;
   private session: Session;
@@ -126,17 +131,20 @@ export class GdmLiveAudio extends LitElement {
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(39, 39, 42, 0.8);
-      padding: 16px 24px;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       z-index: 30;
+      box-sizing: border-box;
     }
 
     .header-left, .header-right {
       display: flex;
       align-items: center;
-      width: 48px;
+      justify-content: center;
+      width: 40px;
+      flex-shrink: 0;
     }
 
     .header-center {
@@ -144,6 +152,7 @@ export class GdmLiveAudio extends LitElement {
       flex-direction: column;
       align-items: center;
       flex: 1;
+      min-width: 0;
     }
 
     .brand-title {
@@ -152,6 +161,7 @@ export class GdmLiveAudio extends LitElement {
       letter-spacing: 0.02em;
       color: #d0a78b;
       margin: 0;
+      line-height: 1.2;
     }
 
     .brand-subtitle {
@@ -159,16 +169,16 @@ export class GdmLiveAudio extends LitElement {
       color: #71717a;
       letter-spacing: 0.22em;
       text-transform: lowercase;
-      margin-top: -2px;
+      margin: 0;
+      line-height: 1;
     }
 
     .nav-btn {
       background: transparent;
       border: none;
       padding: 6px;
-      margin-left: -6px;
       border-radius: 8px;
-      color: #a1a1aa;
+      color: #d4d4d8;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
@@ -177,12 +187,18 @@ export class GdmLiveAudio extends LitElement {
     }
 
     .nav-btn:hover {
-      color: #d0a78b;
+      color: #ffffff;
       background: rgba(39, 39, 42, 0.5);
     }
 
     .nav-btn:focus {
       outline: none;
+    }
+
+    .nav-btn svg {
+      width: 24px;
+      height: 24px;
+      display: block;
     }
 
     .profile-btn {
@@ -212,11 +228,11 @@ export class GdmLiveAudio extends LitElement {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
       position: relative;
       z-index: 10;
-      padding-top: 32px;
-      padding-bottom: 144px;
+      padding: 24px 0;
+      min-height: 0;
+      box-sizing: border-box;
     }
 
     #status {
@@ -224,10 +240,10 @@ export class GdmLiveAudio extends LitElement {
       font-size: 14px;
       font-weight: 400;
       letter-spacing: 0.02em;
-      margin: 8px 0 0 0;
       color: #e4e4e7;
       transition: all 0.3s ease;
       padding: 0 24px;
+      flex-shrink: 0;
     }
 
     .orb-container {
@@ -236,8 +252,7 @@ export class GdmLiveAudio extends LitElement {
       align-items: center;
       justify-content: center;
       width: 100%;
-      max-height: 300px;
-      margin-top: 24px;
+      min-height: 0;
       position: relative;
     }
 
@@ -263,19 +278,16 @@ export class GdmLiveAudio extends LitElement {
 
     .transcription-box {
       position: absolute;
-      bottom: 128px;
+      bottom: 20px;
       left: 0;
       right: 0;
-      width: 100%;
       max-width: 448px;
       margin: 0 auto;
       padding: 0 32px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       text-align: center;
-      height: 64px;
       background: transparent;
       border: none;
       box-shadow: none;
@@ -312,44 +324,45 @@ export class GdmLiveAudio extends LitElement {
     }
 
     .footer-section {
-      position: sticky;
-      bottom: 0;
       width: 100%;
-      background: rgba(8, 5, 4, 0.95);
+      background: rgba(8, 5, 4, 0.98);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid rgba(39, 39, 42, 0.8);
-      padding: 16px 24px;
+      padding: 14px 24px;
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 20;
+      z-index: 50;
+      box-sizing: border-box;
     }
 
     .controls {
       display: flex;
-      justify-content: space-around;
+      justify-content: center;
       align-items: center;
       width: 100%;
-      max-width: 400px;
+      max-width: 360px;
     }
 
     .control-btn {
       background: transparent;
       border: none;
-      color: #a1a1aa;
+      color: #ffffff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      font-size: 12px;
-      font-weight: 500;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
       transition: color 0.3s ease;
       font-family: inherit;
-      min-width: 64px;
+      flex: 1;
       padding: 4px 0;
+      box-sizing: border-box;
     }
 
     .control-btn:hover {
@@ -362,26 +375,212 @@ export class GdmLiveAudio extends LitElement {
 
     .control-btn svg {
       display: block;
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
     }
 
     .control-btn span {
       display: block;
       line-height: 1;
+      text-align: center;
+    }
+
+    .control-btn.start-btn svg {
+      width: 36px;
+      height: 36px;
     }
 
     .control-btn.start-btn span {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: 700;
     }
 
     .control-btn.start-btn:hover {
-      color: #ffffff;
+      color: #ebd0bc;
     }
 
     .control-btn.start-btn.active {
       color: #d0a78b;
+    }
+
+    .video-call-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .video-call-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .video-call-bg {
+      position: absolute;
+      inset: 0;
+      background: #000;
+    }
+
+    .video-call-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-call-header {
+      position: relative;
+      z-index: 10;
+      padding: 16px 20px;
+      padding-top: max(48px, env(safe-area-inset-top));
+      padding-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+    }
+
+    .video-call-header .back-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .video-call-header .back-btn svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    .video-call-header .header-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .video-call-header .header-center .name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      line-height: 1;
+    }
+
+    .header-audio-visualizer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      height: 28px;
+    }
+
+    .header-audio-visualizer .audio-bar {
+      width: 3px;
+      min-height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(to top, #ab7b60, #ebd0bc);
+      box-shadow: 0 0 8px rgba(208, 167, 139, 0.45);
+      animation: header-audio-pulse 900ms ease-in-out infinite;
+    }
+
+    .header-audio-visualizer .audio-bar:nth-child(1) { height: 12px; animation-delay: 0ms; }
+    .header-audio-visualizer .audio-bar:nth-child(2) { height: 20px; animation-delay: 100ms; }
+    .header-audio-visualizer .audio-bar:nth-child(3) { height: 28px; animation-delay: 200ms; }
+    .header-audio-visualizer .audio-bar:nth-child(4) { height: 16px; animation-delay: 300ms; }
+    .header-audio-visualizer .audio-bar:nth-child(5) { height: 24px; animation-delay: 150ms; }
+    .header-audio-visualizer .audio-bar:nth-child(6) { height: 32px; animation-delay: 250ms; }
+    .header-audio-visualizer .audio-bar:nth-child(7) { height: 20px; animation-delay: 350ms; }
+    .header-audio-visualizer .audio-bar:nth-child(8) { height: 12px; animation-delay: 450ms; }
+
+    @keyframes header-audio-pulse {
+      0%, 100% { transform: scaleY(0.45); opacity: 0.55; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+
+    .video-call-timer {
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+      font-variant-numeric: tabular-nums;
+      min-width: 60px;
+      text-align: right;
+    }
+
+    .video-call-content {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .video-call-controls {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 24px 24px;
+      padding-bottom: max(40px, env(safe-area-inset-bottom));
+      flex-shrink: 0;
+      background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 100%);
+    }
+
+    .video-call-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #ffffff;
+      background: rgba(39, 39, 42, 0.9);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .video-call-btn:hover {
+      background: rgba(63, 63, 70, 0.9);
+    }
+
+    .video-call-btn:active {
+      transform: scale(0.92);
+    }
+
+    .video-call-btn svg {
+      display: block;
+      width: 32px;
+      height: 32px;
+    }
+
+    .video-call-btn.end-call {
+      width: 88px;
+      height: 88px;
+      background: #dc2626;
+    }
+
+    .video-call-btn.end-call:hover {
+      background: #ef4444;
+    }
+
+    .video-call-btn.muted {
+      background: rgba(239, 68, 68, 0.35);
     }
 
     #video-preview {
@@ -390,6 +589,22 @@ export class GdmLiveAudio extends LitElement {
 
     #video-canvas {
       display: none;
+    }
+
+    @media (min-width: 640px) {
+      .video-call-content {
+        flex-direction: row;
+        align-items: center;
+        padding: 40px;
+      }
+      .video-call-user {
+        max-width: 400px;
+        aspect-ratio: 16/9;
+      }
+      .video-call-ai .orb-wrapper {
+        width: 220px;
+        height: 220px;
+      }
     }
   `;
 
@@ -651,17 +866,24 @@ export class GdmLiveAudio extends LitElement {
         video: {
           width: {ideal: 640},
           height: {ideal: 480},
+          facingMode: this.useFrontCamera ? 'user' : 'environment',
         },
       });
       this.videoElement.srcObject = this.videoStream;
       await this.videoElement.play();
+      if (this.videoCallUserVideo) {
+        this.videoCallUserVideo.srcObject = this.videoStream;
+        await this.videoCallUserVideo.play();
+      }
       this.isVideoActive = true;
+      this.callStartTime = Date.now();
+      this.callTimerInterval = window.setInterval(() => {
+        const elapsed = Math.floor((Date.now() - this.callStartTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const s = String(elapsed % 60).padStart(2, '0');
+        this.callTimer = `${m}:${s}`;
+      }, 1000);
 
-      // Send frames periodically
-      this.videoInterval = window.setInterval(() => {
-        this.sendVideoFrame();
-      }, 1000); // 1 frame per second
-      
       this.updateStatus('Camera active, Boss.');
     } catch (err) {
       console.error('Error starting video:', err);
@@ -674,12 +896,50 @@ export class GdmLiveAudio extends LitElement {
       clearInterval(this.videoInterval);
       this.videoInterval = null;
     }
+    if (this.callTimerInterval) {
+      clearInterval(this.callTimerInterval);
+      this.callTimerInterval = null;
+    }
+    this.callTimer = '00:00';
     if (this.videoStream) {
       this.videoStream.getTracks().forEach((track) => track.stop());
       this.videoStream = null;
     }
+    if (this.videoCallUserVideo) {
+      this.videoCallUserVideo.srcObject = null;
+    }
     this.isVideoActive = false;
     this.updateStatus('Camera off.');
+  }
+
+  private async flipCamera() {
+    if (!this.isVideoActive) return;
+    if (this.videoStream) {
+      this.videoStream.getTracks().forEach((track) => track.stop());
+      this.videoStream = null;
+    }
+    if (this.videoCallUserVideo) {
+      this.videoCallUserVideo.srcObject = null;
+    }
+    this.videoElement.srcObject = null;
+    this.useFrontCamera = !this.useFrontCamera;
+    try {
+      this.videoStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: {ideal: 640},
+          height: {ideal: 480},
+          facingMode: this.useFrontCamera ? 'user' : 'environment',
+        },
+      });
+      this.videoElement.srcObject = this.videoStream;
+      await this.videoElement.play();
+      if (this.videoCallUserVideo) {
+        this.videoCallUserVideo.srcObject = this.videoStream;
+        await this.videoCallUserVideo.play();
+      }
+    } catch (err) {
+      console.error('Error flipping camera:', err);
+    }
   }
 
   private sendVideoFrame() {
@@ -713,7 +973,7 @@ export class GdmLiveAudio extends LitElement {
       <header class="header">
         <div class="header-left">
           <button class="nav-btn" @click=${() => window.location.href = 'computer.html'}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 6h16M4 12h16M4 18h16"></path>
             </svg>
           </button>
@@ -752,14 +1012,14 @@ export class GdmLiveAudio extends LitElement {
       <footer class="footer-section">
         <div class="controls">
           <button class="control-btn${this.isRecording ? ' active' : ''}" @click=${this.toggleMic}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
             </svg>
             <span>Mic</span>
           </button>
 
           <button class="control-btn start-btn${this.isConnected ? ' active' : ''}" @click=${this.toggleConnection}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18.36 6.64a9 9 0 1 1-12.72 0"></path>
               <line x1="12" y1="2" x2="12" y2="12"></line>
             </svg>
@@ -767,13 +1027,70 @@ export class GdmLiveAudio extends LitElement {
           </button>
 
           <button class="control-btn${this.isVideoActive ? ' active' : ''}" @click=${this.toggleVideo}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
               <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
             <span>Video</span>
           </button>
         </div>
       </footer>
+
+      <div class="video-call-overlay ${this.isVideoActive ? 'visible' : ''}">
+        <div class="video-call-bg">
+          <video id="video-call-user-video" autoplay playsinline muted></video>
+        </div>
+
+        <div class="video-call-header">
+          <button class="back-btn" @click=${this.toggleVideo}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+
+          <div class="header-center">
+            <div class="name">Beatrice</div>
+            <div class="header-audio-visualizer">
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+              <span class="audio-bar"></span>
+            </div>
+          </div>
+
+          <span class="video-call-timer">${this.callTimer}</span>
+        </div>
+
+        <div class="video-call-content"></div>
+
+        <div class="video-call-controls">
+          <button class="video-call-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M8 20h8"></path>
+              <path d="M12 20v4"></path>
+              <path d="M12 12V6"></path>
+              <path d="M9 9l3-3 3 3"></path>
+            </svg>
+          </button>
+
+          <button class="video-call-btn end-call" @click=${this.toggleVideo}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+          </button>
+
+          <button class="video-call-btn" @click=${this.flipCamera}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 8a2 2 0 012-2h2l1.5-2h7L17 6h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
 
       <video id="video-preview" autoplay playsinline muted></video>
       <canvas id="video-canvas"></canvas>

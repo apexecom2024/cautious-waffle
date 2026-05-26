@@ -51,8 +51,8 @@ export class GdmLiveAudioVisuals3D extends LitElement {
     }
 
     .pluto-orb {
-      width: 260px;
-      height: 260px;
+      width: 254px;
+      height: 254px;
       border-radius: 50%;
       overflow: hidden;
       border: 1px solid rgba(232, 201, 184, 0.35);
